@@ -1,0 +1,25 @@
+---
+title: Bibliography
+subtitle: Capstone in Data Science
+author: "Z Skigen"
+date: "September 9, 2025"
+date-format: long
+format: 
+  pdf:
+    number-sections: true
+bibliography: capstone.bib
+
+execute:
+  echo: true
+  warning: false
+  message: false
+
+---
+
+The primary source for this project is the official TrackMan Range API documentation [@trackman2025]. This serves as my external data source, providing the endpoints, authentication details, and variables needed for ingesting live baseball tracking data.
+
+To manage ingestion at scale, I will rely on Satyam Sahu’s article [@sahu2024automate], which demonstrates how to automate REST API data pipelines into SQL warehouses. I will adapt his process to handle TrackMan’s 30-day token refresh window and stream data into a structured PostgreSQL database. For the construction of this database itself, I will follow the official PostgreSQL documentation [@postgresql_create_database_2025], which explains how to properly create and configure new databases for persistent storage.
+
+Finally, I will use open-source documentation on PostgREST, Streamlit, and Dash [@postgrest_docs_2025; @streamlit_docs_2025; @dash_docs_2025] to expose my PostgreSQL data as a RESTful service and to build an analyst-friendly front end. For general grounding in REST API workflows with Python, I will reference Jason Van Schooneveld’s Real Python tutorial [@vanSchooneveld2025].
+
+# References
