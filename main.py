@@ -2,11 +2,16 @@ from datetime import datetime, timedelta
 from trackman.auth import get_access_token
 from trackman.discovery import get_game_sessions
 from trackman.data import get_game_balls
-
-CLIENT_ID = "BDAPomona-PitzerCollege"
-CLIENT_SECRET = "IK7qbLHh8MDLsUxIKo98hIxqv03yQzBZ"
-
+import os
 import time
+from dotenv import load_dotenv
+
+load_dotenv()  # will look for .env in project root
+
+CLIENT_ID = os.getenv("TRACKMAN_CLIENT_ID")
+CLIENT_SECRET = os.getenv("TRACKMAN_CLIENT_SECRET")
+
+
 
 def get_sessions_year(access_token, year=2024):
     all_sessions = []
