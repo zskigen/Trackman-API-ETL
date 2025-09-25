@@ -1,0 +1,42 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage}
+\usepackage{setspace}
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+
+\title{Capstone Project Outline}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+This section will provide background on TrackMan and the TrackMan API. 
+It will explain the current problem: data acquisition is slow and manual, which limits efficiency for coaches and analysts. 
+I will motivate why solving this matters and clearly define the scope of the project.  
+
+\section*{Proposed Solution}
+Here I will describe the overall approach:  
+\begin{itemize}
+    \item Obtain TrackMan API access  
+    \item Extract and clean JSON data from the API  
+    \item Build a PostgreSQL database to store the cleaned data  
+\end{itemize}
+The narrative will explain why these choices make sense (e.g., reproducibility, speed, scalability).  
+
+\section*{Application Development}
+This section will cover how the PostgreSQL database is linked to a Streamlit app.  
+The app will allow users to visually query data and generate reports.  
+I will describe the design choices, usability considerations, and intended audience (coaches, players, analysts).  
+
+\section*{Automated Scouting Reports}
+This section will detail how the data pipeline feeds into automated scouting report generation.  
+The narrative will explain the format of these reports, the key statistics included, and how this improves upon the current manual process.  
+
+\section*{Conclusion and Future Work}
+Finally, I will summarize the project contributions, highlight the practical value for the Pomona-Pitzer baseball program, 
+and outline possible extensions (e.g., integrating video, advanced analytics, scaling to other teams).  
+
+\end{document}
