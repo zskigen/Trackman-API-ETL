@@ -23,7 +23,7 @@ def get_sessions_year(access_token, year=2024):
         utc_from = start.strftime("%Y-%m-%dT%H:%M:%S.000Z")
         utc_to = stop.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
-        print(f"🔎 Querying {utc_from} → {utc_to}")
+        print(f" Querying {utc_from} → {utc_to}")
         try:
             sessions = get_game_sessions(access_token, utc_from, utc_to, session_type="All")
             print(f"  Found {len(sessions)} sessions")
@@ -40,23 +40,48 @@ def get_sessions_year(access_token, year=2024):
 
 
 def main():
-    # Step 1: Authenticate
     tokens = get_access_token(CLIENT_ID, CLIENT_SECRET)
     access_token = tokens["access_token"]
-    print(" Got token")
+    print("Got token")
 
-    # Step 2: Collect sessions for 2024 in 30-day chunks
     sessions = get_sessions_year(access_token, year=2024)
 
-    print(f" Total sessions found in 2024: {len(sessions)}")
-    for s in sessions[:5]:  # preview first 5
+    print(f"Total sessions found in 2024: {len(sessions)}")
+    for s in sessions[:5]:
         print(s["sessionId"], s.get("gameDateUtc"), s.get("location", {}))
 
-    # Step 3: If any sessions exist, fetch balls
-    if sessions:
-        session_id = sessions[0]["sessionId"]
-        balls = get_game_balls(access_token, session_id)
-        print(f" First session {session_id} balls:", balls[:2])
+    # Flatten JSON into a dataframe
+    import pandas as pd
+
+    sessions_df = pd.json_normalize(sessions, sep="_")
+    sessions_df = sessions_df.rename(columns={
+        "sessionId": "session_id",
+        "gameDateUtc": "game_date_utc",
+        "gameDateLocal": "game_date_local",
+        "location_field_name": "field_name",
+        "location_venue_name": "venue_name",
+        "homeTeam_name": "home_team",
+        "awayTeam_name": "away_team",
+        "league_name": "league",
+        "level_name": "level"
+    })[
+        [
+            "session_id",
+            "game_date_utc",
+            "game_date_local",
+            "field_name",
+            "venue_name",
+            "league",
+            "level",
+            "home_team",
+            "away_team"
+        ]
+    ]
+
+    sessions_df.to_csv("sessions_2024.csv", index=False)
+    print("Saved sessions_2024.csv with shape:", sessions_df.shape)
+
 
 if __name__ == "__main__":
     main()
+
