@@ -1,25 +1,35 @@
 from datetime import datetime, timedelta
 from trackman.auth import get_access_token
 from trackman.discovery import get_game_sessions
-from trackman.data import get_game_balls
 import os
 import time
+import pandas as pd
+from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
-load_dotenv()  # will look for .env in project root
+# Load credentials and environment variables
+load_dotenv()
 
 CLIENT_ID = os.getenv("TRACKMAN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("TRACKMAN_CLIENT_SECRET")
 
+PGUSER = os.getenv("PGUSER")
+PGHOST = os.getenv("PGHOST")
+PGPORT = os.getenv("PGPORT")
+PGDATABASE = os.getenv("PGDATABASE")
+
+# Create database connection
+engine = create_engine(f"postgresql://{PGUSER}@{PGHOST}:{PGPORT}/{PGDATABASE}")
 
 
 def get_sessions_year(access_token, year=2024):
+    """Fetch all TrackMan sessions for a given year."""
     all_sessions = []
     start = datetime(year, 1, 1)
     end = datetime(year + 1, 1, 1)
 
     while start < end:
-        stop = min(start + timedelta(days=29), end)  # 30 days inclusive
+        stop = min(start + timedelta(days=29), end)  # Query ~30 days at a time
         utc_from = start.strftime("%Y-%m-%dT%H:%M:%S.000Z")
         utc_to = stop.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -31,30 +41,25 @@ def get_sessions_year(access_token, year=2024):
         except Exception as e:
             print(f" Error on range {utc_from} → {utc_to}: {e}")
 
-        #  Pause to avoid 429s
-        time.sleep(2)
-
+        time.sleep(2)  # avoid hitting API rate limits
         start = stop + timedelta(days=1)
 
     return all_sessions
 
 
 def main():
+    # Authenticate with TrackMan API
     tokens = get_access_token(CLIENT_ID, CLIENT_SECRET)
     access_token = tokens["access_token"]
-    print("Got token")
+    print("Authenticated with TrackMan API")
 
+    # Get all 2024 sessions
     sessions = get_sessions_year(access_token, year=2024)
+    print(f"Total sessions found: {len(sessions)}")
 
-    print(f"Total sessions found in 2024: {len(sessions)}")
-    for s in sessions[:5]:
-        print(s["sessionId"], s.get("gameDateUtc"), s.get("location", {}))
-
-    # Flatten JSON into a dataframe
-    import pandas as pd
-
-    sessions_df = pd.json_normalize(sessions, sep="_")
-    sessions_df = sessions_df.rename(columns={
+    # Flatten JSON → pandas DataFrame
+    df = pd.json_normalize(sessions, sep="_")
+    df = df.rename(columns={
         "sessionId": "session_id",
         "gameDateUtc": "game_date_utc",
         "gameDateLocal": "game_date_local",
@@ -78,10 +83,10 @@ def main():
         ]
     ]
 
-    sessions_df.to_csv("sessions_2024.csv", index=False)
-    print("Saved sessions_2024.csv with shape:", sessions_df.shape)
+    # Load directly into PostgreSQL
+    df.to_sql("sessions", engine, if_exists="replace", index=False)
+    print(f"Loaded {len(df)} rows into 'sessions' table in PostgreSQL")
 
 
 if __name__ == "__main__":
     main()
-
