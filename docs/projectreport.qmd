@@ -99,6 +99,35 @@ This step converts the raw JSON stream into a structured, queryable format suita
 
 I will follow the official PostgreSQL documentation [@postgresql_create_database_2025], which explains how to properly create and configure new databases for persistent storage.
 
+# Ethical Considerations
+
+Building a live data pipeline from the TrackMan API introduces several ethical challenges related to data privacy, ownership, access control, and responsible use of analytics.
+
+## Data Ownership and Privacy
+
+TrackMan data belong to Pomona–Pitzer Baseball and its athletes. Even though the pipeline automates data ingestion, no raw or processed data are shared publicly or stored on unsecured servers.
+
+To ensure compliance with institutional data policies:
+
+* API credentials are stored securely using environment variables (not hard-coded in scripts).  
+* Database access is limited to verified team analysts via password-protected accounts.  
+* Personally identifiable information (PII) such as student names or IDs are excluded from exports, with analyses performed on anonymized player IDs.
+
+
+## Fairness and Responsible Use
+
+Performance data can influence athlete evaluation, so it must be analyzed and interpreted responsibly.  
+
+To mitigate bias and misuse:
+
+* The database is used strictly for internal performance development and not for public ranking or comparison.  
+* Statistical summaries are contextualized with coaching input to prevent misleading conclusions based on incomplete data.  
+* Models and reports emphasize developmental insights (e.g., pitch command trends) rather than absolute judgments.
+
+## Security and Future Safeguards
+
+Once deployed to the cloud, access will continue to follow least-privilege principles, ensuring that each user has only the permissions necessary for their role.Backups are encrypted, and API usage logs are monitored to prevent unauthorized or excessive data extraction.
+
 # Next Steps and Automation
 At present, the database prototype has been created locally but not yet deployed to a cloud server.  
 The next phase will involve:
