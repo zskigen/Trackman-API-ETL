@@ -7,21 +7,25 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
-# Load credentials and environment variables
+# Load credentials
 load_dotenv()
 
 CLIENT_ID = os.getenv("TRACKMAN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("TRACKMAN_CLIENT_SECRET")
 
-PGUSER = os.getenv("PGUSER")
-PGHOST = os.getenv("PGHOST")
-PGPORT = os.getenv("PGPORT")
-PGDATABASE = os.getenv("PGDATABASE")
+# Load PostgreSQL URL
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create database connection
-engine = create_engine(f"postgresql://{PGUSER}@{PGHOST}:{PGPORT}/{PGDATABASE}")
+print("DATABASE_URL:", DATABASE_URL)  # Debug line (can delete later)
+
+# Create database engine
+engine = create_engine(DATABASE_URL)
 
 
+
+# -----------------------------------------
+# Fetch sessions for a given year
+# -----------------------------------------
 def get_sessions_year(access_token, year=2024):
     """Fetch all TrackMan sessions for a given year."""
     all_sessions = []
@@ -29,7 +33,7 @@ def get_sessions_year(access_token, year=2024):
     end = datetime(year + 1, 1, 1)
 
     while start < end:
-        stop = min(start + timedelta(days=29), end)  # Query ~30 days at a time
+        stop = min(start + timedelta(days=29), end)
         utc_from = start.strftime("%Y-%m-%dT%H:%M:%S.000Z")
         utc_to = stop.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -39,25 +43,28 @@ def get_sessions_year(access_token, year=2024):
             print(f"  Found {len(sessions)} sessions")
             all_sessions.extend(sessions)
         except Exception as e:
-            print(f" Error on range {utc_from} → {utc_to}: {e}")
+            print(f" Error on date range {utc_from} → {utc_to}: {e}")
 
-        time.sleep(2)  # avoid hitting API rate limits
+        time.sleep(2)
         start = stop + timedelta(days=1)
 
     return all_sessions
 
 
+# -----------------------------------------
+# Main ETL logic
+# -----------------------------------------
 def main():
-    # Authenticate with TrackMan API
+    # Authenticate with the TrackMan API
     tokens = get_access_token(CLIENT_ID, CLIENT_SECRET)
     access_token = tokens["access_token"]
     print("Authenticated with TrackMan API")
 
-    # Get all 2024 sessions
+    # Fetch sessions from TrackMan
     sessions = get_sessions_year(access_token, year=2024)
     print(f"Total sessions found: {len(sessions)}")
 
-    # Flatten JSON → pandas DataFrame
+    # Flatten JSON into DataFrame
     df = pd.json_normalize(sessions, sep="_")
     df = df.rename(columns={
         "sessionId": "session_id",
@@ -83,10 +90,11 @@ def main():
         ]
     ]
 
-    # Load directly into PostgreSQL
+    # Write DataFrame to Railway PostgreSQL
     df.to_sql("sessions", engine, if_exists="replace", index=False)
-    print(f"Loaded {len(df)} rows into 'sessions' table in PostgreSQL")
+    print(f"Loaded {len(df)} rows into 'sessions' table in Railway PostgreSQL")
 
 
+# -----------------------------------------
 if __name__ == "__main__":
     main()

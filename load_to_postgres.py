@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 # Load environment variables
 load_dotenv()
 
-# TrackMan creds (already in your .env)
+# TrackMan creds (already in .env)
 CLIENT_ID = os.getenv("TRACKMAN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("TRACKMAN_CLIENT_SECRET")
 
@@ -17,7 +17,7 @@ PGPORT = os.getenv("PGPORT")
 PGDATABASE = os.getenv("PGDATABASE")
 
 # Build SQLAlchemy connection string
-engine = create_engine(f"postgresql://{PGUSER}@{PGHOST}:{PGPORT}/{PGDATABASE}")
+engine = create_engine(os.getenv("DATABASE_URL"))
 
 # Load your flattened CSV
 df = pd.read_csv("sessions_2024.csv")

@@ -4,33 +4,30 @@ from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from trackman.auth import get_access_token
 from trackman.data import get_game_balls
-from trackman.discovery import get_game_sessions
 
+# Load environment variables
 load_dotenv()
 
-# --- Credentials ---
+# --- TrackMan credentials ---
 CLIENT_ID = os.getenv("TRACKMAN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("TRACKMAN_CLIENT_SECRET")
 
-PGUSER = os.getenv("PGUSER")
-PGHOST = os.getenv("PGHOST")
-PGPORT = os.getenv("PGPORT")
-PGDATABASE = os.getenv("PGDATABASE")
+# --- Connect to Railway Postgres ---
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(DATABASE_URL)
 
-engine = create_engine(f"postgresql://{PGUSER}@{PGHOST}:{PGPORT}/{PGDATABASE}")
-
-# --- Step 1: Get Access Token ---
+# --- Step 1: Authenticate with TrackMan ---
 tokens = get_access_token(CLIENT_ID, CLIENT_SECRET)
 access_token = tokens["access_token"]
 
-# --- Step 2: Get sessions from Postgres ---
+# --- Step 2: Load sessions from database ---
 sessions_df = pd.read_sql("SELECT session_id FROM sessions", engine)
 print(f"Found {len(sessions_df)} sessions to process.")
 
-# --- Step 3: Loop through sessions and fetch balls ---
+# --- Step 3: Fetch balls for each session ---
 all_balls = []
 for session_id in sessions_df["session_id"].head(10):  # limit for testing
-    print(f"Fetching balls for {session_id}...")
+    print(f"Fetching balls for session {session_id}...")
     try:
         balls = get_game_balls(access_token, session_id)
         for b in balls:
@@ -39,7 +36,7 @@ for session_id in sessions_df["session_id"].head(10):  # limit for testing
     except Exception as e:
         print(f"Error fetching {session_id}: {e}")
 
-# --- Step 4: Flatten and load ---
+# --- Step 4: Write to database ---
 if all_balls:
     balls_df = pd.json_normalize(all_balls, sep="_")
     balls_df.to_sql("balls", engine, if_exists="replace", index=False)
